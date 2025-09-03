@@ -1,4 +1,4 @@
-Dynamic Font Pairing Explorer
+Pair-A-Graph - Craft beautiful font combinations in seconds.
 A simple, dynamic web application that helps designers and developers explore and experiment with Google Fonts. This tool provides a powerful interface for discovering harmonious font pairings, generating new combinations, and saving your favorites for later use.
 
 ✨ Features
