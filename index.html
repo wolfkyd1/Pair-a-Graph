@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Font Pairing Explorer</title>
+    <style>
+        :root {
+            --bg-dark: #101826;
+            --card-bg-dark: rgba(25, 34, 46, 0.5);
+            --text-dark: #e6eef5;
+            --primary-dark: #7b8bff;
+            --secondary-dark: #b68bff;
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.2), 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            position: relative;
+        }
+        
+        header h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin: 0;
+            letter-spacing: -1px;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary-dark), var(--secondary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: background 0.4s ease;
+        }
+
+        .tab-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .tab-nav button {
+            padding: 0.85rem 1.75rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            font-weight: 600;
+            border: 1px solid var(--border-dark);
+        }
+
+        .tab-nav button:hover {
+            opacity: 0.9;
+        }
+
+        .tab-nav button.active {
+            background: linear-gradient(45deg, var(--primary-dark), var(--secondary-dark));
+            color: white;
+            border-color: transparent;
+            font-weight: 700;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            flex-grow: 1;
+        }
+
+        input[type="search"] {
+            width: 100%;
+            padding: 0.85rem 1.25rem;
+            border: 1px solid var(--border-dark);
+            background-color: var(--card-bg-dark);
+            border-radius: 12px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            outline: none;
+        }
+
+        input[type="search"]::placeholder {
+            color: var(--text-dark);
+            opacity: 0.6;
+        }
+        
+        input[type="search"]:focus {
+            border-color: var(--primary-dark);
+            box-shadow: 0 0 0 3px rgba(123, 139, 255, 0.2);
+        }
+
+        .filters {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        select {
+            padding: 0.85rem 1.25rem;
+            border: 1px solid var(--border-dark);
+            background-color: var(--card-bg-dark);
+            border-radius: 12px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%23e6eef5" d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.5em;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                flex-direction: row;
+                align-items: center;
+            }
+            .filters {
+                flex-direction: row;
+            }
+            .filter-group {
+                flex-grow: 1;
+            }
+        }
+        
+        button {
+            padding: 0.85rem 1.75rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, var(--primary-dark), var(--secondary-dark));
+            color: white;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .loading-state, .error-state, .no-results-state {
+            text-align: center;
+            font-size: 1.25rem;
+            padding: 4rem 0;
+            color: var(--text-dark);
+            transition: color 0.4s ease;
+        }
+
+        .font-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        .saved-pairings-grid {
+            margin-top: 3rem;
+        }
+
+        .font-card {
+            background: var(--card-bg-dark);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-dark);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            transition: all 0.4s ease;
+            box-shadow: var(--shadow-dark);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease-in-out forwards;
+            opacity: 0;
+        }
+
+        .font-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(123, 139, 255, 0.05) 0%, rgba(182, 139, 255, 0.05) 100%);
+            z-index: -1;
+            transition: opacity 0.4s ease;
+            opacity: 0;
+        }
+
+        .font-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-dark);
+        }
+        
+        .font-card:hover::before {
+            opacity: 1;
+        }
+
+        .font-card h2 {
+            font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+            margin: 0;
+            line-height: 1.3;
+            overflow-wrap: break-word;
+        }
+
+        .font-card p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .font-meta {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            opacity: 0.7;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-top: auto;
+        }
+        
+        .font-meta span {
+            display: block;
+        }
+        
+        .font-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .font-preview-text {
+            border: 1px solid var(--border-dark);
+            background-color: var(--card-bg-dark);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .font-preview-text::placeholder {
+            color: var(--text-dark);
+            opacity: 0.4;
+        }
+        
+        .font-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .font-controls label {
+            margin: 0;
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+
+        .font-controls input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: var(--border-dark);
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .font-controls input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-dark);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .card-actions button {
+            flex-grow: 1;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+        }
+
+        .action-button {
+            padding: 0.75rem 1.25rem;
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-button:hover {
+            background-color: var(--primary-dark);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+        
+        .builder-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .builder-controls .select-group {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .builder-controls .font-search-input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .builder-controls select {
+            margin-top: 0;
+        }
+
+        #builder-preview {
+            animation: none;
+            opacity: 1;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--bg-dark);
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 900px;
+            transform: scale(0.95);
+            transition: transform 0.4s ease;
+            position: relative;
+            box-shadow: var(--shadow-dark);
+        }
+        
+        .modal-overlay.visible .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 2.5rem;
+            cursor: pointer;
+            color: var(--text-dark);
+            opacity: 0.7;
+            transition: transform 0.3s;
+        }
+        
+        .modal-close:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .modal-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            padding: 1rem;
+        }
+        
+        .modal-preview-section h2 {
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-preview h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin: 0;
+        }
+        
+        .modal-preview p {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .modal-preview code {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-dark);
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+            font-size: 1rem;
+            display: block;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        @media (max-width: 767px) {
+            .controls, .builder-controls {
+                margin-bottom: 1rem;
+            }
+            .font-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .font-card:nth-child(1) { animation-delay: 0.1s; }
+        .font-card:nth-child(2) { animation-delay: 0.2s; }
+        .font-card:nth-child(3) { animation-delay: 0.3s; }
+        .font-card:nth-child(4) { animation-delay: 0.4s; }
+        .font-card:nth-child(5) { animation-delay: 0.5s; }
+        .font-card:nth-child(6) { animation-delay: 0.6s; }
+        .font-card:nth-child(7) { animation-delay: 0.7s; }
+        .font-card:nth-child(8) { animation-delay: 0.8s; }
+        .font-card:nth-child(9) { animation-delay: 0.9s; }
+        .font-card:nth-child(10) { animation-delay: 1.0s; }
+        .font-card:nth-child(11) { animation-delay: 1.1s; }
+        .font-card:nth-child(12) { animation-delay: 1.2s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dynamic Font Pairing Explorer</h1>
+            <p>Discover beautiful font combinations for your next project.</p>
+        </header>
+
+        <main>
+            <div class="tab-nav">
+                <button id="randomizer-tab" class="active">Randomizer</button>
+                <button id="builder-tab">Builder</button>
+            </div>
+            
+            <section id="randomizer-content" class="tab-content active">
+                <div class="controls">
+                    <div class="search-container">
+                        <input type="search" id="font-search" placeholder="Search fonts by name...">
+                        <button id="randomize-btn">Randomize</button>
+                    </div>
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="heading-filter">Heading Font:</label>
+                            <select id="heading-filter">
+                                <option value="">All</option>
+                                <option value="serif">Serif</option>
+                                <option value="display">Display</option>
+                                <option value="handwriting">Handwriting</option>
+                                <option value="monospace">Monospace</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="body-filter">Body Font:</label>
+                            <select id="body-filter">
+                                <option value="">Any</option>
+                                <option value="sans-serif">Sans-serif</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="mood-filter">Mood / Style:</label>
+                            <select id="mood-filter">
+                                <option value="">All</option>
+                                <option value="clean">Clean</option>
+                                <option value="playful">Playful</option>
+                                <option value="editorial">Editorial</option>
+                                <option value="tech">Tech</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="font-grid" class="font-grid">
+                    <div class="loading-state">Loading fonts, please wait...</div>
+                </div>
+            </section>
+            
+            <section id="builder-content" class="tab-content">
+                <div class="builder-controls">
+                    <div class="select-group">
+                        <label for="heading-font-search">Heading Font:</label>
+                        <input type="search" id="heading-font-search" class="font-search-input" placeholder="Search by name...">
+                        <select id="heading-font-select"></select>
+                    </div>
+                    <div class="select-group">
+                        <label for="body-font-search">Body Font:</label>
+                        <input type="search" id="body-font-search" class="font-search-input" placeholder="Search by name...">
+                        <select id="body-font-select"></select>
+                    </div>
+                    <div class="select-group">
+                        <label for="accent-font-search">Accent Font:</label>
+                        <input type="search" id="accent-font-search" class="font-search-input" placeholder="Search by name...">
+                        <select id="accent-font-select"></select>
+                    </div>
+                    <div class="select-group">
+                        <label for="builder-style-filter">Style Filter:</label>
+                        <select id="builder-style-filter">
+                            <option value="">All Styles</option>
+                            <option value="serif">Serif</option>
+                            <option value="sans-serif">Sans-serif</option>
+                            <option value="display">Display</option>
+                            <option value="handwriting">Handwriting</option>
+                            <option value="monospace">Monospace</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="builder-preview"></div>
+            </section>
+
+            <section class="saved-pairings-grid" id="saved-pairings-container" style="display: none;">
+                <h2>Saved Pairings</h2>
+                <div id="saved-pairings-grid" class="font-grid"></div>
+            </section>
+        </main>
+    </div>
+    
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <div id="modal-preview" class="modal-preview"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Powered by the Google Fonts and Fontshare APIs.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // =======================================================
+            // 🚨 API KEY & CONFIGURATION Get yours here -> https://developers.google.com/fonts/docs/developer_api
+            // =======================================================
+            const GOOGLE_FONTS_API_KEY = 'YOUR_API_KEY';
+            const GOOGLE_FONTS_API_URL = `https://www.googleapis.com/webfonts/v1/webfonts?key=${GOOGLE_FONTS_API_KEY}&sort=popularity`;
+            const GOOGLE_FONTS_FALLBACK_URL = 'https://fonts.google.com/metadata/v1/fonts';
+            
+            // Hardcoded Fontshare fonts as API is not for full list retrieval
+            const FONTSHARE_FONTS = [
+                { family: 'Satoshi', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Clash Display', category: 'display', source: 'fontshare' },
+                { family: 'General Sans', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Cabinet Grotesk', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Chillax', category: 'display', source: 'fontshare' },
+                { family: 'Ranade', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Switzer', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Pally', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Neue Montreal', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Epilogue', category: 'sans-serif', source: 'fontshare' },
+                { family: 'Besley', category: 'serif', source: 'fontshare' },
+                { family: 'Zodiak', category: 'serif', source: 'fontshare' },
+                { family: 'Druk', category: 'display', source: 'fontshare' },
+                { family: 'Intel One Mono', category: 'monospace', source: 'fontshare' },
+		{ family: 'Apex Sans', category: 'sans-serif', source: 'fontshare' },
+ 		{ family: 'Apex Serif', category: 'serif', source: 'fontshare' },
+ 		{ family: 'Lab Grotesque', category: 'sans-serif', source: 'fontshare' },
+ 		{ family: 'Lab Serif', category: 'serif', source: 'fontshare' },
+            ];
+
+            const QUOTES = [
+                "Simplicity is the ultimate sophistication.",
+                "The quick brown fox jumps over the lazy dog.",
+                "Design is not just what it looks like and feels like. Design is how it works.",
+                "Great minds discuss ideas; average minds discuss events; small minds discuss people.",
+                "Stay hungry, stay foolish.",
+                "Innovation distinguishes between a leader and a follower.",
+                "The only way to do great work is to love what you do.",
+                "Creativity is intelligence having fun.",
+                "A picture is a poem without words.",
+                "Everything you can imagine is real.",
+                "The future belongs to those who believe in the beauty of their dreams.",
+                "Code is like humor. When you have to explain it, it's bad.",
+                "The art of life is a constant readjustment to our surroundings.",
+                "Life is a daring adventure or nothing at all.",
+                "Do not go where the path may lead, go instead where there is no path and leave a trail.",
+                "The best way to predict the future is to create it.",
+                "What you do today can improve all your tomorrows."
+            ];
+
+            const BODY_PARAGRAPHS = [
+    'Typography is a foundational element of effective design. It sets the tone and readability for all your content, making it crucial to find the right combination of fonts for your project. Experiment with different weights, styles, and pairings to discover the perfect visual language.',
+    'The purpose of this tool is to help designers and developers quickly find and test font combinations from different sources. By providing a curated selection of pairings, we aim to inspire creativity and streamline the process of choosing the perfect typographic hierarchy for any website or application.',
+    'Font pairing is the art of combining two or more typefaces in a way that creates a harmonious and visually appealing design. A good font pairing balances contrast and legibility, ensuring that headings grab attention while body text remains easy to read. Finding the right balance is key to great design.',
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.',
+    'The world of typography is vast and full of unique typefaces, each with its own history and character. Exploring these different fonts can be an adventure in itself, leading you to discover new styles and express new ideas. This tool is your guide on that journey.',
+    'From the timeless elegance of a classic serif to the modern simplicity of a sans-serif, every font has a story to tell. By thoughtfully selecting fonts, you can communicate not just words, but emotions, brand values, and a unique personality to your audience.',
+    'Pairing fonts effectively requires understanding their visual relationship. Consider proportions, x-heights, and weight contrasts to create compositions that are both attractive and readable. This tool helps simplify those decisions for you.',
+    'Typography influences how your content is perceived. A harmonious combination of fonts can elevate a design from ordinary to exceptional, while poor pairings can confuse or distract readers. Experimenting with pairings is essential for crafting engaging experiences.',
+    'Modern digital design often demands flexibility. Variable fonts, multiple weights, and responsive typography allow designers to adapt text seamlessly across devices. Use this tool to explore these possibilities with ease and precision.',
+    'Good typography balances creativity with usability. While expressive fonts can add character, they should never compromise readability. This app guides you in finding that sweet spot between style and function.',
+    'Effective font combinations create hierarchy and flow, guiding readers through your content naturally. By using contrasting styles for headings, body, and accent text, you can make your content more approachable and visually compelling.',
+    'Typography is more than letters on a page—it’s a powerful design tool. Thoughtful font pairing enhances the emotional impact of your messaging, reinforces branding, and strengthens the overall aesthetic of your project.',
+    'A carefully chosen font pairing can make your designs feel polished and intentional. This app allows you to quickly see how different combinations interact, giving you confidence in your typographic choices.',
+    'Experimentation is key to discovering successful font pairings. Try mixing different categories, weights, and moods to find combinations that feel fresh, readable, and harmonious.',
+    'The readability of your text is influenced not just by size, but by spacing, contrast, and font selection. This tool helps you balance all these factors to create designs that are both beautiful and functional.',
+    'Typography plays a critical role in user experience. Clear, legible, and well-paired fonts make content easier to digest and improve engagement on any platform.',
+    'Every project has its own voice, and fonts are a powerful way to express that voice. Use this app to experiment with different pairings that match the tone, style, and personality of your brand or content.',
+    'The art of font pairing blends science and intuition. By analyzing contrast, weight, and style, you can craft combinations that feel intentional while retaining flexibility and creativity.',
+    'Fonts have character. Pairing two complementary typefaces can create rhythm, emphasis, and balance, elevating the design beyond mere text on a screen.',
+    'This tool helps streamline the process of exploring typography, providing both curated examples and algorithmic suggestions to inspire designers and developers alike.'
+];
+
+
+            // =======================================================
+            // 💾 STATE & DOM ELEMENTS
+            // =======================================================
+            let allFonts = [];
+            let categorizedFonts = {};
+            
+            const randomizerTabBtn = document.getElementById('randomizer-tab');
+            const builderTabBtn = document.getElementById('builder-tab');
+            const randomizerContent = document.getElementById('randomizer-content');
+            const builderContent = document.getElementById('builder-content');
+            
+            const fontGrid = document.getElementById('font-grid');
+            const searchInput = document.getElementById('font-search');
+            const headingFilter = document.getElementById('heading-filter');
+            const bodyFilter = document.getElementById('body-filter');
+            const moodFilter = document.getElementById('mood-filter');
+            const randomizeBtn = document.getElementById('randomize-btn');
+            const loadingState = document.querySelector('.loading-state');
+            const savedPairingsContainer = document.getElementById('saved-pairings-container');
+            const savedPairingsGrid = document.getElementById('saved-pairings-grid');
+
+            const headingSearch = document.getElementById('heading-font-search');
+            const bodySearch = document.getElementById('body-font-search');
+            const accentSearch = document.getElementById('accent-font-search');
+            const builderStyleFilter = document.getElementById('builder-style-filter');
+            
+            const headingSelect = document.getElementById('heading-font-select');
+            const bodySelect = document.getElementById('body-font-select');
+            const accentSelect = document.getElementById('accent-font-select');
+            const builderPreviewContainer = document.getElementById('builder-preview');
+
+            // =======================================================
+            // 🧪 CORE FUNCTIONS
+            // =======================================================
+            
+            // Tab switching logic
+            randomizerTabBtn.addEventListener('click', () => {
+                randomizerContent.classList.add('active');
+                builderContent.classList.remove('active');
+                randomizerTabBtn.classList.add('active');
+                builderTabBtn.classList.remove('active');
+            });
+            
+            builderTabBtn.addEventListener('click', () => {
+                builderContent.classList.add('active');
+                randomizerContent.classList.remove('active');
+                builderTabBtn.classList.add('active');
+                randomizerTabBtn.classList.remove('active');
+                initializeBuilder();
+            });
+
+
+            async function fetchFonts() {
+                try {
+                    const fontPromises = [];
+                    const googleUrl = GOOGLE_FONTS_API_KEY === 'YOUR_GOOGLE_FONTS_API_KEY' ? GOOGLE_FONTS_FALLBACK_URL : GOOGLE_FONTS_API_URL;
+                    fontPromises.push(
+                        fetch(googleUrl).then(res => res.json()).then(data => {
+                            if (data.familyMetadataList) return data.familyMetadataList;
+                            if (data.items) return data.items.map(f => ({ ...f, source: 'google' }));
+                            return [];
+                        }).catch(e => {
+                            console.error('Google Fonts fetch failed:', e);
+                            return [];
+                        })
+                    );
+
+                    const results = await Promise.all(fontPromises);
+                    allFonts = results.flat().concat(FONTSHARE_FONTS);
+                    
+                    if (allFonts.length === 0) {
+                        throw new Error('No fonts could be loaded from any API.');
+                    }
+                    
+                    categorizedFonts = categorizeFonts(allFonts);
+                    loadingState.style.display = 'none';
+                    generateAndDisplayPairings();
+                    loadSavedPairings();
+
+                } catch (error) {
+                    console.error('Failed to fetch fonts:', error);
+                    loadingState.style.display = 'none';
+                    fontGrid.innerHTML = '<div class="error-state">Failed to load fonts. Please check your internet connection and API keys.</div>';
+                }
+            }
+
+            function categorizeFonts(fonts) {
+                const categories = ['serif', 'sans-serif', 'display', 'handwriting', 'monospace'];
+                return categories.reduce((acc, category) => {
+                    acc[category] = fonts.filter(f => f.category === category);
+                    return acc;
+                }, {});
+            }
+
+            function generatePairings(num = 12, filters = {}) {
+                const pairings = [];
+                const headingCategories = filters.headingCategory && filters.headingCategory !== '' ? [filters.headingCategory] : ['serif', 'display', 'handwriting', 'sans-serif'];
+                const bodyCategories = filters.bodyCategory && filters.bodyCategory !== '' ? [filters.bodyCategory] : ['sans-serif', 'serif'];
+                const accentCategories = ['monospace', 'display', 'sans-serif'];
+            
+                const headingCandidates = getMoodFilteredCandidates(headingCategories, filters.mood);
+                const bodyCandidates = getMoodFilteredCandidates(bodyCategories, filters.mood);
+                const accentCandidates = getMoodFilteredCandidates(accentCategories, filters.mood);
+
+                if (headingCandidates.length === 0 || bodyCandidates.length === 0 || accentCandidates.length === 0) {
+                    return [];
+                }
+
+                while (pairings.length < num) {
+                    const headingFont = getRandomElement(headingCandidates);
+                    const bodyFont = getRandomElement(bodyCandidates);
+                    const accentFont = getRandomElement(accentCandidates);
+
+                    if (headingFont && bodyFont && accentFont && headingFont.family !== bodyFont.family && headingFont.family !== accentFont.family && bodyFont.family !== accentFont.family) {
+                        const score = calculatePairingScore(headingFont, bodyFont, accentFont, filters.mood);
+                        if (score > 0.5) {
+                             pairings.push({ heading: headingFont, body: bodyFont, accent: accentFont, score: score });
+                        }
+                    }
+                    if (pairings.length > num * 2) break;
+                }
+                
+                pairings.sort((a, b) => b.score - a.score);
+                return pairings.slice(0, num);
+            }
+
+            function getMoodFilteredCandidates(categories, mood) {
+                let candidates = categories.flatMap(cat => categorizedFonts[cat] || []);
+                if (mood === 'clean') {
+                    return candidates.filter(f => f.family.length < 15 && (f.category === 'sans-serif' || f.category === 'serif'));
+                } else if (mood === 'playful') {
+                    return candidates.filter(f => f.category === 'handwriting' || f.category === 'display');
+                } else if (mood === 'editorial') {
+                    return candidates.filter(f => f.category === 'serif' || f.family.includes('Display'));
+                } else if (mood === 'tech') {
+                    return candidates.filter(f => f.category === 'monospace' || f.family.includes('Mono') || f.family.includes('Code') || f.family === 'Satoshi');
+                }
+                return candidates;
+            }
+
+            function calculatePairingScore(heading, body, accent, mood) {
+                let score = 0.5;
+                
+                if (heading.category !== 'sans-serif' && body.category === 'sans-serif') score += 0.4;
+                if ((heading.category === 'serif' && body.category === 'sans-serif') || (heading.category === 'display' && body.category === 'sans-serif')) score += 0.3;
+                if (heading.category === 'handwriting' && body.category === 'sans-serif') score += 0.2;
+                if (accent.category === 'monospace' || accent.category === 'display') score += 0.2;
+                if (heading.category === body.category && heading.family !== body.family) score += 0.1;
+
+                if (mood === 'clean' && heading.category === 'serif' && body.category === 'sans-serif') score += 0.5;
+                if (mood === 'playful' && heading.category === 'handwriting' && body.category === 'sans-serif') score += 0.5;
+                if (mood === 'editorial' && heading.category === 'serif' && body.category === 'serif') score += 0.5;
+                if (mood === 'tech' && heading.category === 'monospace' && body.category === 'sans-serif' && accent.category === 'monospace') score += 0.5;
+
+                return score;
+            }
+
+            function renderPairings(pairings, container) {
+                container.innerHTML = '';
+                
+                if (pairings.length === 0) {
+                    container.innerHTML = '<div class="no-results-state">No pairings found. Try adjusting your filters or search.</div>';
+                    return;
+                }
+
+                pairings.forEach((pair, index) => {
+                    const card = renderFontCard(pair, index);
+                    container.appendChild(card);
+                });
+            }
+
+            function renderFontCard(pair, index, isBuilder = false) {
+                const headingQuote = getRandomElement(QUOTES);
+                const bodyParagraph = getRandomElement(BODY_PARAGRAPHS);
+                const card = document.createElement('div');
+                card.className = 'font-card';
+                if (!isBuilder) {
+                    card.style.animationDelay = `${index * 0.1}s`;
+                } else {
+                    card.style.animation = 'none';
+                    card.style.opacity = '1';
+                }
+
+                const fontFamilies = [pair.heading.family, pair.body.family, pair.accent.family];
+                const googleFamilies = fontFamilies.filter(f => allFonts.find(a => a.family === f && a.source === 'google')).map(f => f.replace(/\s+/g, '+')).join('&family=');
+                const fontshareFamilies = fontFamilies.filter(f => allFonts.find(a => a.family === f && a.source === 'fontshare')).map(f => f.replace(/\s+/g, '-')).join(',');
+
+                const linkTag = document.createElement('link');
+                linkTag.rel = 'stylesheet';
+
+                const importUrls = [];
+                if (fontshareFamilies) importUrls.push(`https://api.fontshare.com/v2/css?f[]=${fontshareFamilies}`);
+                if (googleFamilies) importUrls.push(`https://fonts.googleapis.com/css2?family=${googleFamilies}&display=swap`);
+
+                linkTag.href = importUrls.join('');
+                document.head.appendChild(linkTag);
+
+                card.innerHTML = `
+                    <div class="font-section">
+                        <input type="text" class="font-preview-text" value="${headingQuote}" style="font-family: '${pair.heading.family}', ${pair.heading.category}; font-size: 2.5rem; font-weight: 700;">
+                        <div class="font-controls">
+                            <label>Size:</label>
+                            <input type="range" class="font-size-slider" min="1.5" max="3.5" step="0.1" value="2.5">
+                            <label>Weight:</label>
+                            <input type="range" class="font-weight-slider" min="100" max="900" step="100" value="700">
+                        </div>
+                    </div>
+                    <div class="font-section">
+                        <textarea class="font-preview-text" rows="3" style="font-family: '${pair.body.family}', ${pair.body.category}; font-size: 1.1rem;">${bodyParagraph}</textarea>
+                        <div class="font-controls">
+                            <label>Size:</label>
+                            <input type="range" class="font-size-slider" min="0.8" max="1.5" step="0.1" value="1.1">
+                            <label>Weight:</label>
+                            <input type="range" class="font-weight-slider" min="100" max="900" step="100" value="400">
+                        </div>
+                    </div>
+                    <div class="font-meta">
+                        <span>Heading: <strong>${pair.heading.family}</strong> (${pair.heading.source})</span>
+                        <span>Body: <strong>${pair.body.family}</strong> (${pair.body.source})</span>
+                        <span>Accent: <strong>${pair.accent.family}</strong> (${pair.accent.source})</span>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-button save-btn">Save</button>
+                        <button class="action-button download-btn">Download</button>
+                    </div>
+                `;
+                
+                const headingInput = card.querySelector('.font-section:nth-child(1) .font-preview-text');
+                const bodyTextarea = card.querySelector('.font-section:nth-child(2) .font-preview-text');
+                const headingSizeSlider = card.querySelector('.font-section:nth-child(1) .font-size-slider');
+                const headingWeightSlider = card.querySelector('.font-section:nth-child(1) .font-weight-slider');
+                const bodySizeSlider = card.querySelector('.font-section:nth-child(2) .font-size-slider');
+                const bodyWeightSlider = card.querySelector('.font-section:nth-child(2) .font-weight-slider');
+
+                headingSizeSlider.addEventListener('input', (e) => headingInput.style.fontSize = `${e.target.value}rem`);
+                headingWeightSlider.addEventListener('input', (e) => headingInput.style.fontWeight = e.target.value);
+                bodySizeSlider.addEventListener('input', (e) => bodyTextarea.style.fontSize = `${e.target.value}rem`);
+                bodyWeightSlider.addEventListener('input', (e) => bodyTextarea.style.fontWeight = e.target.value);
+
+                card.querySelector('.save-btn').addEventListener('click', () => savePairing(pair));
+                card.querySelector('.download-btn').addEventListener('click', () => downloadFonts(pair));
+
+                return card;
+            }
+
+            function savePairing(pair) {
+                let savedPairings = JSON.parse(localStorage.getItem('savedPairings')) || [];
+                if (!savedPairings.some(p => p.heading.family === pair.heading.family && p.body.family === pair.body.family)) {
+                    savedPairings.push(pair);
+                    localStorage.setItem('savedPairings', JSON.stringify(savedPairings));
+                    alert('Pairing saved!');
+                    loadSavedPairings();
+                } else {
+                    alert('This pairing is already saved!');
+                }
+            }
+
+            function loadSavedPairings() {
+                const savedPairings = JSON.parse(localStorage.getItem('savedPairings')) || [];
+                if (savedPairings.length > 0) {
+                    savedPairingsContainer.style.display = 'block';
+                    renderPairings(savedPairings, savedPairingsGrid);
+                } else {
+                    savedPairingsContainer.style.display = 'none';
+                }
+            }
+
+            async function downloadFonts(pair) {
+                const fontsToDownload = [pair.heading, pair.body, pair.accent];
+                
+                for (const font of fontsToDownload) {
+                    if (font.source === 'fontshare') {
+                        alert(`For ${font.family}, please go to the Fontshare website to download it manually.`);
+                        continue;
+                    }
+
+                    try {
+                        const response = await fetch(font.files.regular);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = `${font.family.replace(/\s/g, '_')}.ttf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    } catch (e) {
+                        console.error(`Failed to download font: ${font.family}`, e);
+                        alert(`Failed to download ${font.family}. It might not be directly downloadable.`);
+                    }
+                }
+            }
+
+            function generateAndDisplayPairings() {
+                const query = searchInput.value.toLowerCase();
+                const headingCat = headingFilter.value;
+                const bodyCat = bodyFilter.value;
+                const mood = moodFilter.value;
+
+                let pairings = [];
+                if (query) {
+                    const searchedFonts = allFonts.filter(f => f.family.toLowerCase().includes(query));
+                    const bodyFonts = categorizedFonts['sans-serif'];
+                    const accentFonts = categorizedFonts['monospace'];
+                    
+                    if (searchedFonts.length > 0 && bodyFonts.length > 0 && accentFonts.length > 0) {
+                        const searchPairings = new Set();
+                        searchedFonts.forEach(font => {
+                            const bodyFont = getRandomElement(bodyFonts);
+                            const accentFont = getRandomElement(accentFonts);
+                            if (font.family !== bodyFont.family && font.family !== accentFont.family && bodyFont.family !== accentFont.family) {
+                                searchPairings.add(JSON.stringify({ heading: font, body: bodyFont, accent: accentFont }));
+                            }
+                        });
+                        pairings = Array.from(searchPairings).map(p => JSON.parse(p));
+                    }
+                } else {
+                    const finalFilters = {
+                        headingCategory: headingCat,
+                        bodyCategory: bodyCat,
+                        mood: mood,
+                    };
+                    pairings = generatePairings(12, finalFilters);
+                }
+                
+                renderPairings(pairings, fontGrid);
+            }
+
+            function initializeBuilder() {
+                updateBuilderSelects();
+
+                headingSelect.addEventListener('change', updateBuilderPreview);
+                bodySelect.addEventListener('change', updateBuilderPreview);
+                accentSelect.addEventListener('change', updateBuilderPreview);
+
+                headingSearch.addEventListener('input', () => updateBuilderSelects());
+                bodySearch.addEventListener('input', () => updateBuilderSelects());
+                accentSearch.addEventListener('input', () => updateBuilderSelects());
+                builderStyleFilter.addEventListener('change', updateBuilderSelects);
+
+                updateBuilderPreview();
+            }
+            
+            function updateBuilderSelects() {
+                populateBuilderSelects(headingSelect, headingSearch.value, builderStyleFilter.value);
+                populateBuilderSelects(bodySelect, bodySearch.value, builderStyleFilter.value);
+                populateBuilderSelects(accentSelect, accentSearch.value, builderStyleFilter.value);
+            }
+            
+            function populateBuilderSelects(selectElement, filterText = '', categoryFilter = '') {
+                // Store the current selection before clearing
+                const selectedValue = selectElement.value;
+            
+                // Clear previous options
+                selectElement.innerHTML = '';
+            
+                // Add a default "Select a font" option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '-- Select a font --';
+                selectElement.appendChild(defaultOption);
+            
+                // Filter fonts based on search text and category filter
+                const filteredFonts = allFonts.filter(font => {
+                    const matchesName = font.family.toLowerCase().includes(filterText.toLowerCase());
+                    const matchesCategory = categoryFilter === '' || font.category === categoryFilter;
+                    return matchesName && matchesCategory;
+                });
+            
+                // Populate the select element with the filtered fonts
+                filteredFonts.forEach(font => {
+                    const option = document.createElement('option');
+                    option.value = font.family;
+                    option.textContent = `${font.family} (${font.source})`;
+                    selectElement.appendChild(option);
+                });
+            
+                // Re-select the previously selected option if it's still in the list
+                if (Array.from(selectElement.options).some(opt => opt.value === selectedValue)) {
+                    selectElement.value = selectedValue;
+                }
+            }
+
+
+            function updateBuilderPreview() {
+                const headingFamily = headingSelect.value;
+                const bodyFamily = bodySelect.value;
+                const accentFamily = accentSelect.value;
+                
+                const headingFont = allFonts.find(f => f.family === headingFamily);
+                const bodyFont = allFonts.find(f => f.family === bodyFamily);
+                const accentFont = allFonts.find(f => f.family === accentFamily);
+
+                if (!headingFont || !bodyFont || !accentFont) {
+                    builderPreviewContainer.innerHTML = '<div class="no-results-state">Please select fonts from all three categories to see a preview.</div>';
+                    return;
+                }
+
+                const customPairing = {
+                    heading: headingFont,
+                    body: bodyFont,
+                    accent: accentFont
+                };
+                
+                builderPreviewContainer.innerHTML = '';
+                const card = renderFontCard(customPairing, 0, true);
+                builderPreviewContainer.appendChild(card);
+            }
+
+
+            function debounce(func, delay) {
+                let timeoutId;
+                return function(...args) {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+
+            function getRandomElement(arr) {
+                if (!arr || arr.length === 0) return null;
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            randomizeBtn.addEventListener('click', generateAndDisplayPairings);
+            searchInput.addEventListener('input', debounce(generateAndDisplayPairings, 300));
+            headingFilter.addEventListener('change', generateAndDisplayPairings);
+            bodyFilter.addEventListener('change', generateAndDisplayPairings);
+            moodFilter.addEventListener('change', generateAndDisplayPairings);
+
+            fetchFonts();
+        });
+    </script>
+</body>
+</html>
